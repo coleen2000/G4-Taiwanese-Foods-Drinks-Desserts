@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>My Yummy Restaurant - ESL Learning Game</title>
+    <!-- Tailwind CSS for utility styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts for elementary typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            overflow-x: hidden;
+            background-image: url('background.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+
+        .font-fredoka {
+            font-family: 'Fredoka One', cursive;
+        }
+
+        /* Glassmorphism panel for controls */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            border: 4px solid #FCD34D;
+            box-shadow: 0 12px 28px -5px rgba(217, 119, 6, 0.2);
+        }
+
+        /* Tray Container styling */
+        .tray-container {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(8px);
+            border: 4px dashed #F59E0B;
+            box-shadow: inset 0 2px 10px rgba(180, 83, 9, 0.08), 0 10px 25px rgba(0,0,0,0.06);
+        }
+
+        /* Hide scrollbars for smooth scrolling */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Pop & Bounce animations */
+        @keyframes popIn {
+            0% { transform: scale(0.3) rotate(-5deg); opacity: 0; }
+            70% { transform: scale(1.1) rotate(2deg); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        @keyframes bounceGently {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        @keyframes pulseCheck {
+            0%, 100% { transform: scale(1); box-shadow: 0 10px 30px rgba(34, 197, 94, 0.5); }
+            50% { transform: scale(1.08); box-shadow: 0 15px 40px rgba(34, 197, 94, 0.7); }
+        }
+
+        @keyframes starGlow {
+            0%, 100% { filter: drop-shadow(0 0 12px #FBBF24); transform: scale(1); }
+            50% { filter: drop-shadow(0 0 26px #F59E0B); transform: scale(1.08); }
+        }
+
+        .animate-pop {
+            animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .animate-bounce-gentle {
+            animation: bounceGently 2s infinite ease-in-out;
+        }
+
+        .animate-check {
+            animation: pulseCheck 1.6s infinite ease-in-out;
+        }
+
+        .animate-star-glow {
+            animation: starGlow 2s infinite ease-in-out;
+        }
+
+        /* Card flip for star reward reveal */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+
+        .food-card {
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .food-card:hover {
+            transform: translateY(-4px) scale(1.03);
+        }
+        .food-card:active {
+            transform: translateY(2px) scale(0.96);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between text-slate-800">
+
+    <!-- Header Bar -->
+    <header class="w-full bg-white/95 backdrop-blur-md border-b-4 border-amber-300 p-2.5 sm:p-4 shadow-md flex justify-between items-center z-10">
+        <div class="flex items-center gap-2 sm:gap-3">
+            <div class="bg-amber-400 text-white p-2 sm:p-2.5 rounded-2xl shadow-sm text-xl sm:text-2xl">
+                <i class="fa-solid fa-utensils"></i>
+            </div>
+            <div>
+                <h1 class="text-xl sm:text-3xl font-fredoka text-amber-700 tracking-wide leading-none">
+                    Yummy Kitchen
+                </h1>
+                <p class="text-xs sm:text-sm font-bold text-amber-900/70 hidden sm:block">Select food to make your sentence!</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <!-- Audio Toggle Button -->
+            <button id="sound-btn" onclick="toggleSound()" class="bg-amber-100 hover:bg-amber-200 text-amber-700 font-bold p-2.5 sm:p-3 rounded-2xl shadow-sm border-2 border-amber-300 transition-all active:scale-95 text-base sm:text-lg" aria-label="Toggle Sound">
+                <i id="sound-icon" class="fa-solid fa-volume-high"></i>
+            </button>
+            <!-- Clear Button -->
+            <button onclick="resetGame()" class="bg-rose-100 hover:bg-rose-200 text-rose-600 font-bold px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl shadow-sm border-2 border-rose-300 transition-all active:scale-95 text-xs sm:text-base flex items-center gap-1.5">
+                <i class="fa-solid fa-rotate-right"></i>
+                <span>Clear Tray</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Game Container -->
+    <main class="flex-1 max-w-6xl w-full mx-auto p-3 sm:p-6 flex flex-col justify-between gap-4 z-0">
+        
+        <!-- Question Prompt Banner Above Menu -->
+        <div class="w-full text-center">
+            <div class="bg-amber-500 text-white border-4 border-amber-300 rounded-2xl p-2.5 sm:p-3.5 shadow-md inline-block w-full">
+                <span class="text-xs sm:text-sm font-bold uppercase tracking-wider block opacity-90 mb-0.5">Question</span>
+                <div class="font-fredoka text-lg sm:text-2xl tracking-wide">
+                    What food/drink do you want?
+                </div>
+            </div>
+        </div>
+
+        <!-- Food Selection Carousel Panel -->
+        <section class="w-full glass-panel rounded-3xl p-3 sm:p-5 relative">
+            <div class="flex items-center justify-between mb-2">
+                <h2 class="text-base sm:text-xl font-fredoka text-amber-900 flex items-center gap-2">
+                    <i class="fa-solid fa-store text-amber-500"></i> Select Food & Drinks
+                </h2>
+                <span id="item-count-badge" class="text-xs sm:text-sm font-bold bg-amber-500 text-white px-3 py-1 rounded-full shadow-sm">
+                    Items: 0
+                </span>
+            </div>
+
+            <!-- Carousel Wrapper with Navigation Arrows -->
+            <div class="relative flex items-center px-1 sm:px-4">
+                <!-- Left Arrow Button -->
+                <button onclick="scrollMenu(-280)" class="absolute left-0 z-20 bg-amber-500 hover:bg-amber-600 text-white font-bold w-10 h-10 sm:w-12 sm:h-12 rounded-full shadow-lg border-2 border-white flex items-center justify-center transition-all active:scale-90 text-lg sm:text-2xl">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+
+                <!-- Food Items Scroll Track -->
+                <div id="food-carousel" class="flex gap-3 sm:gap-4 overflow-x-auto scroll-smooth no-scrollbar py-2 px-10 w-full">
+                    <!-- Food items injected via JS -->
+                </div>
+
+                <!-- Right Arrow Button -->
+                <button onclick="scrollMenu(280)" class="absolute right-0 z-20 bg-amber-500 hover:bg-amber-600 text-white font-bold w-10 h-10 sm:w-12 sm:h-12 rounded-full shadow-lg border-2 border-white flex items-center justify-center transition-all active:scale-90 text-lg sm:text-2xl">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- Sentence Structure & Food Tray Container -->
+        <section class="w-full mt-auto flex flex-col items-center">
+            
+            <!-- Target ESL Sentence Builder Banner -->
+            <div class="w-full max-w-3xl mb-3 text-center">
+                <div class="bg-white/90 border-4 border-amber-400 rounded-2xl p-3 sm:p-4 shadow-lg inline-block w-full">
+                    <span class="text-xs sm:text-sm font-bold text-amber-600 uppercase tracking-wider block mb-1">Target Sentence</span>
+                    <div id="sentence-box" class="font-fredoka text-xl sm:text-3xl text-amber-900 leading-tight">
+                        I want <span id="sentence-target" class="text-amber-500 underline decoration-wavy decoration-amber-400">...</span>, please.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tray Surface Section -->
+            <div class="w-full relative max-w-4xl">
+                <div class="tray-container rounded-3xl p-4 sm:p-6 min-h-[180px] sm:min-h-[240px] w-full flex flex-col justify-between relative bg-white/60">
+                    
+                    <!-- Tray Graphic Header -->
+                    <div class="flex justify-center -mt-8 sm:-mt-10">
+                        <div class="bg-amber-600 text-white font-fredoka text-xs sm:text-base px-6 py-1.5 rounded-full shadow-md border-2 border-amber-200 flex items-center gap-2">
+                            <span>MY TRAY</span>
+                        </div>
+                    </div>
+
+                    <!-- Tray Items Area -->
+                    <div id="tray-items-container" class="flex flex-wrap items-center justify-center gap-3 sm:gap-6 min-h-[120px] sm:min-h-[150px] my-2">
+                        <!-- Empty Tray Placeholder Message -->
+                        <div id="empty-tray-msg" class="text-amber-900/60 font-bold text-center text-sm sm:text-lg flex flex-col items-center gap-1 my-auto">
+                            <i class="fa-solid fa-hand-pointer text-2xl sm:text-3xl animate-bounce-gentle text-amber-600"></i>
+                            Tap food above to place it on your tray!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Big Check Button ('✓') -->
+                <div class="mt-4 sm:mt-6 flex justify-center">
+                    <button id="check-btn" onclick="finishOrder()" disabled 
+                        class="animate-check opacity-50 cursor-not-allowed bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-fredoka text-xl sm:text-3xl px-10 sm:px-16 py-3.5 sm:py-5 rounded-full shadow-2xl border-4 border-white transition-all transform flex items-center gap-3 sm:gap-4">
+                        <i class="fa-solid fa-circle-check text-2xl sm:text-4xl"></i>
+                        <span>DONE! ✓</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Star Reward Overlay Modal -->
+    <div id="reward-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex flex-col items-center justify-center p-4 z-50 hidden opacity-0 transition-opacity duration-300">
+        
+        <div class="text-center mb-4">
+            <h2 class="text-3xl sm:text-5xl font-fredoka text-yellow-300 drop-shadow-lg mb-2 animate-bounce-gentle">
+                🎉 Great Order! 🎉
+            </h2>
+            <p id="reward-subtitle" class="text-white text-base sm:text-xl font-semibold">Pick 1 card to see how many stars you get!</p>
+        </div>
+
+        <!-- Star Cards Grid Container -->
+        <div id="stars-container" class="flex flex-wrap justify-center gap-4 sm:gap-6 max-w-4xl w-full my-4">
+            <!-- Stars rendered dynamically here -->
+        </div>
+
+        <!-- Restart Button -->
+        <button onclick="resetGame()" class="mt-6 bg-amber-400 hover:bg-amber-500 text-amber-950 font-fredoka text-lg sm:text-2xl px-8 py-3.5 rounded-full shadow-xl border-4 border-yellow-200 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2">
+            <i class="fa-solid fa-arrows-rotate"></i> Order Again!
+        </button>
+    </div>
+
+    <script>
+        /*********************************************************************
+         * 1. FOOD & DRINK ITEMS CONFIGURATION (LOWERCASE NAMES)
+         *********************************************************************/
+        const FOOD_ITEMS = [
+            { id: 'oysteromelet',        name: 'oyster omelet',         image: 'oysteromelet.png',        color: 'bg-amber-100/90 border-amber-300' },
+            { id: 'friedmushrooms',      name: 'fried mushrooms',       image: 'friedmushrooms.png',      color: 'bg-orange-100/90 border-orange-300' },
+            { id: 'chocolateshavedice',  name: 'chocolate shaved ice',  image: 'chocolateshavedice.png',  color: 'bg-amber-200/90 border-amber-400' },
+            { id: 'strawberryshavedice', name: 'strawberry shaved ice', image: 'strawberryshavedice.png', color: 'bg-rose-100/90 border-rose-300' },
+            { id: 'rainbowshavedice',    name: 'rainbow shaved ice',    image: 'rainbowshavedice.png',    color: 'bg-pink-100/90 border-pink-300' },
+            { id: 'milkshake',           name: 'milkshake',             image: 'milkshake.png',           color: 'bg-purple-100/90 border-purple-300' },
+            { id: 'matchabubbletea',     name: 'matcha bubble tea',     image: 'matchabubbletea.png',     color: 'bg-emerald-100/90 border-emerald-300' },
+            { id: 'stinkytofu',          name: 'stinky tofu',           image: 'stinkytofu.png',          color: 'bg-yellow-100/90 border-yellow-300' },
+            { id: 'shavedice',           name: 'shaved ice',            image: 'shavedice.png',           color: 'bg-sky-100/90 border-sky-300' },
+            { id: 'guabao',              name: 'gua bao',               image: 'guabao.png',              color: 'bg-amber-50/90 border-amber-200' },
+            { id: 'bubblemilktea',       name: 'bubble milk tea',       image: 'bubblemilktea.png',       color: 'bg-orange-50/90 border-orange-200' }
+        ];
+
+        /*********************************************************************
+         * 2. STATE MANAGEMENT & AUDIO SYNTHESIZER
+         *********************************************************************/
+        let currentTray = [];
+        let soundEnabled = true;
+        let hasFlippedCard = false;
+
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function playSynthesizedSound(type) {
+            if (!soundEnabled) return;
+            try {
+                if (!audioCtx) audioCtx = new AudioContext();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'add') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(450, now);
+                    osc.frequency.exponentialRampToValueAtTime(850, now + 0.12);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                    osc.start(now);
+                    osc.stop(now + 0.12);
+                } else if (type === 'remove') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(320, now);
+                    osc.frequency.exponentialRampToValueAtTime(150, now + 0.1);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'fanfare') {
+                    [523.25, 659.25, 783.99, 1046.50].forEach((freq, index) => {
+                        const o = audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
+                        o.connect(g);
+                        g.connect(audioCtx.destination);
+                        o.type = 'triangle';
+                        o.frequency.setValueAtTime(freq, now + index * 0.08);
+                        g.gain.setValueAtTime(0.25, now + index * 0.08);
+                        g.gain.exponentialRampToValueAtTime(0.01, now + index * 0.08 + 0.3);
+                        o.start(now + index * 0.08);
+                        o.stop(now + index * 0.08 + 0.3);
+                    });
+                } else if (type === 'star') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.22);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+                    osc.start(now);
+                    osc.stop(now + 0.22);
+                }
+            } catch (e) {
+                console.log('Audio error:', e);
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('sound-icon');
+            const btn = document.getElementById('sound-btn');
+            if (soundEnabled) {
+                icon.className = 'fa-solid fa-volume-high';
+                btn.classList.remove('bg-slate-200', 'text-slate-500');
+                btn.classList.add('bg-amber-100', 'text-amber-700');
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark';
+                btn.classList.remove('bg-amber-100', 'text-amber-700');
+                btn.classList.add('bg-slate-200', 'text-slate-500');
+            }
+        }
+
+        /*********************************************************************
+         * 3. RENDER CAROUSEL MENU & SCROLL LOGIC
+         *********************************************************************/
+        function renderMenu() {
+            const carousel = document.getElementById('food-carousel');
+            carousel.innerHTML = '';
+
+            FOOD_ITEMS.forEach(item => {
+                const card = document.createElement('button');
+                card.className = `food-card ${item.color} border-2 shadow-sm rounded-2xl p-2.5 flex-shrink-0 w-28 sm:w-36 flex flex-col items-center justify-between cursor-pointer`;
+                card.onclick = () => addToTray(item);
+
+                const fallbackText = encodeURIComponent(item.name);
+                const placeholderUrl = `https://placehold.co/120x120/FFF/D97706?text=${fallbackText}`;
+
+                card.innerHTML = `
+                    <div class="w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center p-1">
+                        <img src="${item.image}" 
+                             alt="${item.name}" 
+                             class="food-img max-w-full max-h-full drop-shadow-md object-contain"
+                             onerror="this.onerror=null; this.src='${placeholderUrl}';" />
+                    </div>
+                    <span class="font-fredoka text-xs sm:text-sm text-slate-700 mt-1 text-center leading-tight">${item.name}</span>
+                `;
+                carousel.appendChild(card);
+            });
+        }
+
+        function scrollMenu(distance) {
+            const carousel = document.getElementById('food-carousel');
+            carousel.scrollBy({ left: distance, behavior: 'smooth' });
+        }
+
+        /*********************************************************************
+         * 4. TRAY LOGIC & SENTENCE BUILDER
+         *********************************************************************/
+        function addToTray(item) {
+            const trayItem = { ...item, instanceId: Date.now() + Math.random() };
+            currentTray.push(trayItem);
+            playSynthesizedSound('add');
+            updateTrayUI();
+        }
+
+        function removeFromTray(instanceId) {
+            currentTray = currentTray.filter(item => item.instanceId !== instanceId);
+            playSynthesizedSound('remove');
+            updateTrayUI();
+        }
+
+        function updateTrayUI() {
+            const container = document.getElementById('tray-items-container');
+            const emptyMsg = document.getElementById('empty-tray-msg');
+            const checkBtn = document.getElementById('check-btn');
+            const countBadge = document.getElementById('item-count-badge');
+            const sentenceTarget = document.getElementById('sentence-target');
+
+            Array.from(container.children).forEach(child => {
+                if (child !== emptyMsg) child.remove();
+            });
+
+            countBadge.innerText = `Items: ${currentTray.length}`;
+
+            if (currentTray.length === 0) {
+                emptyMsg.classList.remove('hidden');
+                checkBtn.disabled = true;
+                checkBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                checkBtn.classList.remove('opacity-100', 'cursor-pointer', 'hover:scale-105');
+                sentenceTarget.innerText = '...';
+            } else {
+                emptyMsg.classList.add('hidden');
+                checkBtn.disabled = false;
+                checkBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                checkBtn.classList.add('opacity-100', 'cursor-pointer', 'hover:scale-105');
+
+                const names = currentTray.map(i => i.name);
+                let formattedText = '';
+                if (names.length === 1) {
+                    formattedText = names[0];
+                } else if (names.length === 2) {
+                    formattedText = `${names[0]} and ${names[1]}`;
+                } else {
+                    formattedText = `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
+                }
+                sentenceTarget.innerText = formattedText;
+
+                currentTray.forEach(item => {
+                    const trayElem = document.createElement('div');
+                    trayElem.className = 'animate-pop relative cursor-pointer bg-white/95 p-2 sm:p-3 rounded-2xl shadow-lg border-2 border-amber-300 flex flex-col items-center hover:scale-105 transition-transform';
+                    trayElem.onclick = () => removeFromTray(item.instanceId);
+
+                    const fallbackText = encodeURIComponent(item.name);
+                    const placeholderUrl = `https://placehold.co/100x100/FFF/D97706?text=${fallbackText}`;
+
+                    trayElem.innerHTML = `
+                        <div class="w-14 h-14 sm:w-20 sm:h-20 flex items-center justify-center">
+                            <img src="${item.image}" alt="${item.name}" class="food-img max-w-full max-h-full drop-shadow-md object-contain" 
+                                 onerror="this.onerror=null; this.src='${placeholderUrl}';" />
+                        </div>
+                        <span class="font-bold text-xs sm:text-sm text-slate-700 mt-1">${item.name}</span>
+                        <div class="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs shadow-md">
+                            <i class="fa-solid fa-xmark"></i>
+                        </div>
+                    `;
+                    container.appendChild(trayElem);
+                });
+            }
+        }
+
+        /*********************************************************************
+         * 5. FINISH ORDER & REWARD MODAL (3 TO 7 STARS REVEAL)
+         *********************************************************************/
+        function finishOrder() {
+            if (currentTray.length === 0) return;
+
+            playSynthesizedSound('fanfare');
+            hasFlippedCard = false;
+
+            const modal = document.getElementById('reward-modal');
+            const subtitle = document.getElementById('reward-subtitle');
+            subtitle.innerText = 'Pick 1 card to see how many stars you get!';
+
+            const starsContainer = document.getElementById('stars-container');
+            starsContainer.innerHTML = '';
+
+            const starGradients = [
+                'from-amber-400 to-yellow-500',
+                'from-purple-400 to-indigo-500',
+                'from-emerald-400 to-teal-500',
+                'from-rose-400 to-pink-500'
+            ];
+
+            for (let idx = 0; idx < 4; idx++) {
+                const randomStars = Math.floor(Math.random() * 5) + 3; // Generates 3, 4, 5, 6, or 7
+                const cardWrapper = document.createElement('div');
+                cardWrapper.className = 'w-36 h-48 sm:w-44 sm:h-56 perspective-1000 cursor-pointer animate-pop star-card-wrapper';
+                cardWrapper.style.animationDelay = `${idx * 0.1}s`;
+
+                let starIconsHTML = '';
+                for (let s = 0; s < randomStars; s++) {
+                    starIconsHTML += `<i class="fa-solid fa-star text-yellow-300 text-sm sm:text-base drop-shadow-sm"></i>`;
+                }
+
+                cardWrapper.innerHTML = `
+                    <div id="star-card-${idx}" class="transform-style-3d w-full h-full relative rounded-3xl shadow-2xl" onclick="revealStar(${idx}, ${randomStars})">
+                        <!-- Front of Card -->
+                        <div class="absolute inset-0 bg-gradient-to-b from-amber-300 to-yellow-500 rounded-3xl border-4 border-white flex flex-col items-center justify-center p-3 backface-hidden animate-star-glow">
+                            <i class="fa-solid fa-star text-white text-5xl sm:text-7xl drop-shadow-lg mb-2"></i>
+                            <span class="font-fredoka text-amber-950 text-base sm:text-lg">PICK ME!</span>
+                        </div>
+                        <!-- Back of Card -->
+                        <div class="absolute inset-0 bg-gradient-to-br ${starGradients[idx]} rounded-3xl border-4 border-white flex flex-col items-center justify-center p-3 backface-hidden rotate-y-180 text-white text-center">
+                            <div class="font-fredoka text-4xl sm:text-5xl mb-1 text-yellow-300 drop-shadow-md">+${randomStars}</div>
+                            <h3 class="font-fredoka text-base sm:text-lg leading-tight mb-2">STARS! ⭐</h3>
+                            <div class="flex flex-wrap justify-center gap-1 max-w-[100px]">
+                                ${starIconsHTML}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                starsContainer.appendChild(cardWrapper);
+            }
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+            }, 10);
+        }
+
+        function revealStar(index, starCount) {
+            if (hasFlippedCard) return;
+
+            hasFlippedCard = true;
+            const card = document.getElementById(`star-card-${index}`);
+            if (card) {
+                card.classList.add('rotate-y-180');
+                playSynthesizedSound('star');
+
+                const subtitle = document.getElementById('reward-subtitle');
+                subtitle.innerText = `Awesome! You earned ${starCount} Stars! ⭐`;
+
+                const allWrappers = document.querySelectorAll('.star-card-wrapper');
+                allWrappers.forEach((wrapper, idx) => {
+                    if (idx !== index) {
+                        wrapper.classList.add('opacity-40', 'pointer-events-none');
+                    }
+                });
+            }
+        }
+
+        /*********************************************************************
+         * 6. RESET & INIT GAME
+         *********************************************************************/
+        function resetGame() {
+            currentTray = [];
+            updateTrayUI();
+
+            const modal = document.getElementById('reward-modal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        window.onload = function() {
+            renderMenu();
+            updateTrayUI();
+        };
+    </script>
+</body>
+</html>
